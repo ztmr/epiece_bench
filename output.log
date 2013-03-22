@@ -1,0 +1,74 @@
+ *** Compiled with HIPE ==================
+Erlang R15B (erts-5.9) [source] [64-bit] [smp:8:8] [async-threads:0] [hipe] [kernel-poll:false]
+
+Eshell V5.9  (abort with ^G)
+1> Max=100, Delim="\\"
+ * epiece ........................     122
+ * string:tokens .................   11003
+ * re:split ......................   24223
+ * re:split again (cached?) ......      45
+ * epiece2 (re:split; cached?) ...     104
+ * string:tokens hack ............      13
+Max=1000, Delim="\\"
+ * epiece ........................     331
+ * string:tokens .................     430
+ * re:split ......................     202
+ * re:split again (cached?) ......     154
+ * epiece2 (re:split; cached?) ...     511
+ * string:tokens hack ............     243
+Max=10000, Delim="\\"
+ * epiece ........................    4002
+ * string:tokens .................    4054
+ * re:split ......................    1423
+ * re:split again (cached?) ......    2022
+ * epiece2 (re:split; cached?) ...    1503
+ * string:tokens hack ............    1555
+
+ *** Compiled without HIPE ===============
+Erlang R15B (erts-5.9) [source] [64-bit] [smp:8:8] [async-threads:0] [hipe] [kernel-poll:false]
+
+Eshell V5.9  (abort with ^G)
+1> Max=100, Delim="\\"
+ * epiece ........................      21
+ * string:tokens .................    2342
+ * re:split ......................    5342
+ * re:split again (cached?) ......      13
+ * epiece2 (re:split; cached?) ...      13
+ * string:tokens hack ............      15
+Max=1000, Delim="\\"
+ * epiece ........................     111
+ * string:tokens .................     215
+ * re:split ......................     144
+ * re:split again (cached?) ......     145
+ * epiece2 (re:split; cached?) ...     100
+ * string:tokens hack ............     235
+Max=10000, Delim="\\"
+ * epiece ........................    3250
+ * string:tokens .................    4104
+ * re:split ......................    1422
+ * re:split again (cached?) ......    3003
+ * epiece2 (re:split; cached?) ...    2015
+ * string:tokens hack ............    3425
+
+ *** EScript =============================
+Max=100, Delim="\\"
+ * epiece ........................     441
+ * string:tokens .................      35
+ * re:split ......................   10140
+ * re:split again (cached?) ......     141
+ * epiece2 (re:split; cached?) ...     320
+ * string:tokens hack ............   13130
+Max=1000, Delim="\\"
+ * epiece ........................    1215
+ * string:tokens .................     145
+ * re:split ......................   10010
+ * re:split again (cached?) ......     210
+ * epiece2 (re:split; cached?) ...     552
+ * string:tokens hack ............  215535
+Max=10000, Delim="\\"
+ * epiece ........................   33031
+ * string:tokens .................    5103
+ * re:split ......................   11414
+ * re:split again (cached?) ......    1352
+ * epiece2 (re:split; cached?) ...   13120
+ * string:tokens hack ............ 4142010
