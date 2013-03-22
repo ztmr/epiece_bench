@@ -4,7 +4,9 @@ The goal is to find the fastest possible way of
 string splitting/tokenization with string delimiter.
 Inspiration comes from ANSI/ISO MUMPS `$P[iece]` function.
 
-Assumption is that string:split does not exists
+Assumption is that `string:split` does not exists
+(even if it was proposed
+[multiple times](http://erlang.org/pipermail/erlang-questions/2008-October/038892.html))
 and we don't want to implement it as BIF/NIF native
 calls.
 
