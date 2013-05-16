@@ -25,3 +25,18 @@ An ideal candidate will look like:
   epiece ("hello:world::zoo::joe", ":", [foo, bar, x, x, x, ex]) ->
     [{foo, "hello"}, {bar, "world"}, {x, []}, {ex, "joe"}].
 ```
+
+
+The NIF way
+===========
+Well, we're not lazy, so the NIF library was added too.
+It is pretty fast and may be even faster.
+
+The next step would be to change the NIF module
+to work with binaries instead of lists/strings.
+
+Another thing is to make `epiece:epn` function
+completely native -- for sure, it will be faster
+to make `xzip` and `epiece_nif:piece` within a
+single iteration loop in the NIF itself.
+
