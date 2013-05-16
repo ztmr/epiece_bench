@@ -22,6 +22,12 @@ epiece2 (_, _, []) -> [];
 epiece2 (S, D, F) when is_list (S) ->
   xzip (F, re:split (S, resc (D), [{return, list}]), []).
 
+%% @doc epiece_nif:piece on steroids (returns a proplist).
+epn ([], _, _) -> [];
+epn (_, _, []) -> [];
+epn (S, D, F) when is_list (S) ->
+  xzip (F, epiece_nif:piece (S, D), []).
+
 %% @doc lists:zip for lists of unequal length.
 xzip ([], _, Acc) -> Acc;
 xzip (_, [], Acc) -> Acc;
@@ -162,6 +168,11 @@ main (Max) when is_integer (Max) ->
   io:format (" * epiece_nif:piece .............. ~7.6b~n", [Tim5]),
   %Tim5 = tc_avg (fun () -> epiece_nif:piece (Str, Delim) end),
   %io:format (" * epiece_nif:piece .............. ~7.6p~n", [Tim5]),
+
+  {Tim6, _} = timer:tc (fun () -> epn (Str, Delim, Seq) end),
+  io:format (" * epiece_nif + xzip ............. ~7.6b~n", [Tim6]),
+  %Tim6 = tc_avg (fun () -> epn (Str, Delim, Seq) end),
+  %io:format (" * epiece_nif + xzip ............. ~7.6p~n", [Tim6]),
 
   timer:sleep (500),
 
