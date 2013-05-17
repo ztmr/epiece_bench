@@ -2,6 +2,10 @@
 -compile (export_all).
 
 -define (TC_AVG_REPEAT, 10).
+-define (MAG, 100).  %% 1.23us -> 123 in output
+
+%-define (BENCH (Fun), {round (tc_avg (Fun)*?MAG), dropped_result}).
+-define (BENCH (Fun), (fun () -> {X,Y} = timer:tc (Fun), {X*?MAG, Y} end) ()).
 
 epiece ([], _, _) -> []; %% No source data
 epiece (_, _, []) -> []; %% No fields to extract
@@ -21,6 +25,23 @@ epiece2 ([], _, _) -> [];
 epiece2 (_, _, []) -> [];
 epiece2 (S, D, F) when is_list (S) ->
   xzip (F, re:split (S, resc (D), [{return, list}]), []).
+
+%% Split by single character in-place,
+%% if the delimiter is longer than 1, use NIF.
+epz ([], _) -> [];
+epz (S, [D]) ->
+  epz_ (S, D, [], []);
+epz (S, D) ->
+  epiece_nif:piece (S, D).
+
+%% D is a single character
+epz_ ([], _, [], []) -> [];
+epz_ ([], _, Buf, Res) ->
+  lists:reverse ([lists:reverse (Buf)|Res]);
+epz_ ([D|S], D, Buf, Res) ->
+  epz_ (S, D, [], [lists:reverse (Buf)|Res]);
+epz_ ([X|S], D, Buf, Res) ->
+  epz_ (S, D, [X|Buf], Res).
 
 %% @doc epiece_nif:piece on steroids (returns a proplist).
 epn ([], _, _) -> [];
@@ -121,7 +142,7 @@ tc_avg_internal (Fun, Count, Avg) ->
 
 main ([X]) -> main (list_to_integer (X));
 main (Max) when is_integer (Max) ->
-  Delim = "\\",
+  Delim = "|",
   Seq = lists:seq (0, Max),
   Mst = fun () -> {_, _, Ms} = now (), Ms end,
   Str = [ $  + (random:uniform (Max) + Mst () + I) rem ($~-$ )
@@ -129,50 +150,37 @@ main (Max) when is_integer (Max) ->
   io:format ("Max=~b, Delim=~p~n", [Max, Delim]),
 
   %timer:tc (fun epiece/3, [Str, Delim, Seq]).
-  {Tim0, Res} = timer:tc (fun () -> epiece (Str, Delim, Seq) end),
+  {Tim0, Res} = ?BENCH (fun () -> epiece (Str, Delim, Seq) end),
   io:format (" * epiece ........................ ~7.6b~n", [Tim0]),
-  %Tim0 = tc_avg (fun () -> epiece (Str, Delim, Seq) end),
-  %io:format (" * epiece ........................ ~7.6p~n", [Tim0]),
 
-  {Tim1, _} = timer:tc (fun () -> string:tokens (Str, Delim) end),
+  {Tim1, _} = ?BENCH (fun () -> string:tokens (Str, Delim) end),
   io:format (" * string:tokens ................. ~7.6b~n", [Tim1]),
-  %Tim1 = tc_avg (fun () -> string:tokens (Str, Delim) end),
-  %io:format (" * string:tokens ................. ~7.6p~n", [Tim1]),
 
-  {Tim2, _} = timer:tc (fun () -> re:split (Str, resc (Delim), [{return, list}]) end),
+  {Tim2, _} = ?BENCH (fun () -> re:split (Str, resc (Delim), [{return, list}]) end),
   io:format (" * re:split ...................... ~7.6b~n", [Tim2]),
-  %Tim2 = tc_avg (fun () -> re:split (Str, resc (Delim), [{return, list}]) end),
-  %io:format (" * re:split ...................... ~7.6p~n", [Tim2]),
 
-  {Tim2x, _} = timer:tc (fun () -> re:split (Str, resc (Delim), [{return, list}]) end),
+  {Tim2x, _} = ?BENCH (fun () -> re:split (Str, resc (Delim), [{return, list}]) end),
   io:format (" * re:split again (cached?) ...... ~7.6b~n", [Tim2x]),
-  %Tim2x = tc_avg (fun () -> re:split (Str, resc (Delim), [{return, list}]) end),
-  %io:format (" * re:split again (cached?) ...... ~7.6p~n", [Tim2x]),
 
-  {Tim3, Res} = timer:tc (fun () -> epiece2 (Str, Delim, Seq) end),
+  {Tim3, Res} = ?BENCH (fun () -> epiece2 (Str, Delim, Seq) end),
   io:format (" * epiece2 (re:split; cached?) ... ~7.6b~n", [Tim3]),
-  %Tim3 = tc_avg (fun () -> epiece2 (Str, Delim, Seq) end),
-  %io:format (" * epiece2 (re:split; cached?) ... ~7.6p~n", [Tim3]),
 
-  {Tim4, _} = timer:tc (fun () -> tokens (Str, Delim) end),
+  {Tim4, _} = ?BENCH (fun () -> tokens (Str, Delim) end),
   io:format (" * string:tokens hack ............ ~7.6b~n", [Tim4]),
-  %Tim4 = tc_avg (fun () -> tokens (Str, Delim) end),
-  %io:format (" * string:tokens hack ............ ~7.6p~n", [Tim4]),
 
   %% Warm up `epiece_nif' (let it load the shared library first)
   %% ...unlike others [i.e. re:split], only the first run is slower
   %% independently on its input arguments!
   epiece_nif:piece ("a,b,c", ","),
 
-  {Tim5, _} = timer:tc (fun () -> epiece_nif:piece (Str, Delim) end),
+  {Tim5, _} = ?BENCH (fun () -> epiece_nif:piece (Str, Delim) end),
   io:format (" * epiece_nif:piece .............. ~7.6b~n", [Tim5]),
-  %Tim5 = tc_avg (fun () -> epiece_nif:piece (Str, Delim) end),
-  %io:format (" * epiece_nif:piece .............. ~7.6p~n", [Tim5]),
 
-  {Tim6, _} = timer:tc (fun () -> epn (Str, Delim, Seq) end),
+  {Tim6, _} = ?BENCH (fun () -> epn (Str, Delim, Seq) end),
   io:format (" * epiece_nif + xzip ............. ~7.6b~n", [Tim6]),
-  %Tim6 = tc_avg (fun () -> epn (Str, Delim, Seq) end),
-  %io:format (" * epiece_nif + xzip ............. ~7.6p~n", [Tim6]),
+
+  {Tim7, _} = ?BENCH (fun () -> epz (Str, Delim) end),
+  io:format (" * epz ........................... ~7.6b~n", [Tim7]),
 
   timer:sleep (500),
 
